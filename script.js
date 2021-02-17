@@ -3,6 +3,8 @@ let x;
 let y;
 let operator;
 let result;
+const numbers = ['0','1','2','3','4','5','6','7','8','9','.'];
+const operators = ['*','/','+','-','Enter']
 
 //selectors
 const screen = document.querySelector('.screen');
@@ -12,9 +14,10 @@ const operatorButtons = [...document.querySelectorAll('.operator-button')];
 
 
 //event listeners
-//clearButton.addEventListener('click', clearScreen);
-numButtons.forEach(numButton => numButton.addEventListener('click', addToScreen));
-operatorButtons.forEach(operatorButton => operatorButton.addEventListener('click', addOperation));
+clearButton.addEventListener('click', clearScreen);
+numButtons.forEach(numButton => numButton.addEventListener('click', guiEvent));
+operatorButtons.forEach(operatorButton => operatorButton.addEventListener('click', guiEvent));
+window.addEventListener('keydown', keyboardEvent);
 
 
 //functions
@@ -39,35 +42,64 @@ function operate(func, x, y) {
 }
 
 function clearScreen() {
+    x = null;
+    y = null;
+    result = null;
+    operator = null;
     screen.textContent = '';
-
 }
 
-function addToScreen() {
-    screen.textContent += this.textContent;
-}
-
-function addOperation() {
-    if (this.textContent === '=') {
-        y = Number(screen.textContent);
-        result = operate(operator, x, y);
-        screen.textContent = result;
+function keyboardEvent(e) {
+    const val = e.key;
+    if (numbers.includes(val) || operators.includes(val)) {
+        updateScreen(val);
     } else {
-        x = Number(screen.textContent);
-        switch(this.textContent) {
-            case '+':
-                operator = add;
-                break;
-            case '-':
-                operator = subtract;
-                break;
-            case '*':
-                operator = multiply;
-                break;
-            case '/':
-                operator = divide;
-                break;
-        }
-        screen.textContent = '';
+        e.preventDefault();
     }
+}
+
+function guiEvent() {
+    updateScreen(this.textContent);
+}
+
+//need to add functionality for continuous operation
+//need to make sure you can't hit enter without a full expression
+//need to make sure you can't add multiple decimal points in a single variable
+
+function updateScreen(string) {
+    switch(string) {
+        case 'Enter':
+        case '=':
+            expression = screen.textContent;
+            if (expression.includes('.')) {
+                y = parseFloat(expression.slice(expression.indexOf(operator.symbol)+1));
+            } else {
+                y = parseInt(expression.slice(expression.indexOf(operator.symbol)+1));
+            }
+            result = operate(operator.func, x, y);
+            if (result % 1 === 0) {
+                screen.textContent = result;
+            } else {
+                screen.textContent = result.toFixed(2);
+            }
+            x = result;
+            return;
+        case '*':
+            operator = {'symbol': string, 'func': multiply};
+            x = parseInt(screen.textContent);
+            break;
+        case '/':
+            operator = {'symbol': string, 'func': divide};
+            x = parseInt(screen.textContent);
+            break;
+        case '+':
+            operator = {'symbol': string, 'func': add};
+            x = parseInt(screen.textContent);
+            break;
+        case '-':
+            operator = {'symbol': string, 'func': subtract};
+            x = parseInt(screen.textContent);
+            break;
+    }
+    screen.textContent += string;
 }
